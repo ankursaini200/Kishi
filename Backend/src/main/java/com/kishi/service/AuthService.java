@@ -48,7 +48,7 @@ public class AuthService {
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
         String token = jwtService.generateToken(authentication.getName());
-
+        
         return new AuthResponse("success", token);
     }
 
