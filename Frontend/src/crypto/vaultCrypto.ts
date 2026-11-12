@@ -5,6 +5,7 @@ const decoder = new TextDecoder();
 
 export const PBKDF2_ITERATIONS = 600_000;
 export const KEY_LENGTH = 256;
+export const VAULT_VERIFIER_CANARY = 'kishi-vault-verifier:v1';
 
 function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
   const copy = new Uint8Array(bytes.byteLength);
@@ -127,5 +128,60 @@ export async function decryptVaultData(
       'Failed to decrypt vault data: invalid master password or corrupted payload',
       { cause: err }
     );
+  }
+}
+
+/**
+ * Creates a client-side encrypted master-password verifier using a
+ * domain-separated canary, PBKDF2-SHA-256 (600,000 iterations), and AES-256-GCM
+ * with a fresh random salt and IV.
+ */
+export async function createMasterPasswordVerifier(
+  masterPassword: string
+): Promise<string> {
+  if (!masterPassword) {
+    throw new Error('Master password is required to create a verifier');
+  }
+
+  return encryptVaultData(VAULT_VERIFIER_CANARY, masterPassword);
+}
+
+/**
+ * Verifies a master password against a stored client-encrypted verifier payload.
+ * Returns false on incorrect passwords, tampered ciphertext, or malformed payloads.
+ */
+export async function verifyMasterPasswordWithVerifier(
+  encryptedVerifier: string,
+  masterPassword: string
+): Promise<boolean> {
+  if (!encryptedVerifier || !masterPassword) {
+    return false;
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(encryptedVerifier);
+    if (!parsed || typeof parsed !== 'object') {
+      return false;
+    }
+
+    const payload = parsed as Partial<EncryptedVaultPayload>;
+    if (
+      payload.version !== 1 ||
+      payload.algorithm !== 'AES-256-GCM' ||
+      payload.kdf !== 'PBKDF2-SHA-256' ||
+      typeof payload.salt !== 'string' ||
+      typeof payload.iv !== 'string' ||
+      typeof payload.ciphertext !== 'string' ||
+      !payload.salt ||
+      !payload.iv ||
+      !payload.ciphertext
+    ) {
+      return false;
+    }
+
+    const decrypted = await decryptVaultData(encryptedVerifier, masterPassword);
+    return decrypted === VAULT_VERIFIER_CANARY;
+  } catch {
+    return false;
   }
 }

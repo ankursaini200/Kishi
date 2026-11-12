@@ -1,5 +1,10 @@
 import { apiRequest } from './api';
-import type { VaultRequest, VaultResponse } from '../types/vault';
+import type {
+  VaultRequest,
+  VaultResponse,
+  VaultVerifierRequest,
+  VaultVerifierResponse,
+} from '../types/vault';
 
 export async function getVaultEntries(
   token: string
@@ -64,4 +69,25 @@ export async function searchVaultEntries(
       token,
     }
   );
+}
+
+export async function getVaultVerifier(
+  token: string
+): Promise<VaultVerifierResponse> {
+  return apiRequest<VaultVerifierResponse>('/api/vault/verifier', {
+    method: 'GET',
+    token,
+  });
+}
+
+export async function createVaultVerifier(
+  encryptedVerifier: string,
+  token: string
+): Promise<VaultVerifierResponse> {
+  const payload: VaultVerifierRequest = { encryptedVerifier };
+  return apiRequest<VaultVerifierResponse>('/api/vault/verifier', {
+    method: 'POST',
+    token,
+    body: JSON.stringify(payload),
+  });
 }

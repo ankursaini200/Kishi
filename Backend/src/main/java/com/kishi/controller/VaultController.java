@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.kishi.dto.VaultRequest;
 import com.kishi.dto.VaultResponse;
+import com.kishi.dto.VaultVerifierRequest;
+import com.kishi.dto.VaultVerifierResponse;
 import com.kishi.entity.User;
 import com.kishi.service.CurrentUserService;
 import com.kishi.service.VaultService;
@@ -123,6 +125,31 @@ public class VaultController {
 
         return ResponseEntity.ok(
                 "Vault entry deleted successfully"
+        );
+    }
+
+    @GetMapping("/verifier")
+    public ResponseEntity<VaultVerifierResponse> getVaultVerifier(
+            Authentication authentication) {
+
+        User user =
+                currentUserService.getCurrentUser(authentication);
+
+        return ResponseEntity.ok(
+                vaultService.getVaultVerifier(user)
+        );
+    }
+
+    @PostMapping("/verifier")
+    public ResponseEntity<VaultVerifierResponse> createVaultVerifier(
+            @Valid @RequestBody VaultVerifierRequest request,
+            Authentication authentication) {
+
+        User user =
+                currentUserService.getCurrentUser(authentication);
+
+        return ResponseEntity.ok(
+                vaultService.createVaultVerifier(request, user)
         );
     }
 }

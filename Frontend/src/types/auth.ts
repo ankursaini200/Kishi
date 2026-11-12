@@ -15,9 +15,6 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   register: (email: string, password: string) => Promise<boolean>;
-  loginWithGoogle: () => Promise<boolean>;
-  loginWithPasskey: () => Promise<boolean>;
-  loginWithSso: () => Promise<boolean>;
   logout: () => void;
 }
 

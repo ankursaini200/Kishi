@@ -3,21 +3,30 @@ package com.kishi.service;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.kishi.dto.VaultRequest;
 import com.kishi.dto.VaultResponse;
+import com.kishi.dto.VaultVerifierRequest;
+import com.kishi.dto.VaultVerifierResponse;
 import com.kishi.entity.User;
 import com.kishi.entity.VaultEntry;
 import com.kishi.exception.ResourceNotFoundException;
+import com.kishi.exception.VaultVerifierAlreadyExistsException;
+import com.kishi.repository.UserRepository;
 import com.kishi.repository.VaultEntryRepository;
 
 @Service
 public class VaultService {
 
     private final VaultEntryRepository vaultEntryRepository;
+    private final UserRepository userRepository;
 
-    public VaultService(VaultEntryRepository vaultEntryRepository) {
+    public VaultService(
+            VaultEntryRepository vaultEntryRepository,
+            UserRepository userRepository) {
         this.vaultEntryRepository = vaultEntryRepository;
+        this.userRepository = userRepository;
     }
 
     public VaultResponse createEntry(VaultRequest request, User user) {
@@ -131,5 +140,34 @@ public class VaultService {
                         entry.getWebsite()
                 ))
                 .toList();
+    }
+
+    public VaultVerifierResponse getVaultVerifier(User user) {
+        String verifier = user.getVaultVerifier();
+        boolean hasVerifier = verifier != null && !verifier.isBlank();
+
+        return new VaultVerifierResponse(
+                hasVerifier,
+                hasVerifier ? verifier : null
+        );
+    }
+
+    @Transactional
+    public VaultVerifierResponse createVaultVerifier(
+            VaultVerifierRequest request,
+            User user) {
+
+        int updatedRows = userRepository.initializeVaultVerifierIfAbsent(
+                user.getId(),
+                request.getEncryptedVerifier()
+        );
+
+        if (updatedRows == 0) {
+            throw new VaultVerifierAlreadyExistsException(
+                    "Vault verifier already exists"
+            );
+        }
+
+        return new VaultVerifierResponse(true, request.getEncryptedVerifier());
     }
 }

@@ -50,45 +50,6 @@ export function Login({ onSwitchToRegister }: LoginProps) {
     }
   };
 
-  // Google Authentication handler
-  const handleGoogleLogin = async () => {
-    setError(null);
-    setIsLoading(true);
-    try {
-      await auth.loginWithGoogle();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Google authentication failed');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Passkey Authentication handler
-  const handlePasskeyLogin = async () => {
-    setError(null);
-    setIsLoading(true);
-    try {
-      await auth.loginWithPasskey();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Passkey authentication failed');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // SSO Authentication handler
-  const handleSsoLogin = async () => {
-    setError(null);
-    setIsLoading(true);
-    try {
-      await auth.loginWithSso();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Single Sign-On authentication failed');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className="desktop-container flex items-center justify-center p-4 sm:p-8">
       {/* Authentic Windows 95/98 Logon Dialog at Original Comfortable Scale */}
@@ -199,46 +160,50 @@ export function Login({ onSwitchToRegister }: LoginProps) {
           {/* Alternate Authentication Providers Groupbox */}
           <div className="win98-groupbox mt-5">
             <span className="win98-groupbox-legend">
-              Alternate Authentication Methods
+              Alternate Authentication Methods (Coming Soon)
             </span>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
               {/* Google Authentication */}
               <button
                 type="button"
-                onClick={handleGoogleLogin}
-                disabled={isLoading}
-                className="win98-btn py-2 px-3 text-xs flex items-center justify-center gap-2 font-normal"
-                title="Log on using Google Account"
+                disabled
+                aria-disabled="true"
+                className="win98-btn py-2 px-3 text-xs flex items-center justify-center gap-1.5 font-normal opacity-60 cursor-not-allowed"
+                title="Coming soon — Google OAuth is not yet implemented"
               >
                 <span className="font-bold text-blue-900">G</span>
-                <span>Google</span>
+                <span>Google (Coming Soon)</span>
               </button>
 
               {/* Passkey Authentication */}
               <button
                 type="button"
-                onClick={handlePasskeyLogin}
-                disabled={isLoading}
-                className="win98-btn py-2 px-3 text-xs flex items-center justify-center gap-2 font-normal"
-                title="Log on using WebAuthn / Passkey"
+                disabled
+                aria-disabled="true"
+                className="win98-btn py-2 px-3 text-xs flex items-center justify-center gap-1.5 font-normal opacity-60 cursor-not-allowed"
+                title="Coming soon — WebAuthn / Passkey authentication is not yet implemented"
               >
                 <span>🔑</span>
-                <span>Passkey</span>
+                <span>Passkey (Coming Soon)</span>
               </button>
 
               {/* Enterprise SSO */}
               <button
                 type="button"
-                onClick={handleSsoLogin}
-                disabled={isLoading}
-                className="win98-btn py-2 px-3 text-xs flex items-center justify-center gap-2 font-normal"
-                title="Log on using Enterprise Single Sign-On"
+                disabled
+                aria-disabled="true"
+                className="win98-btn py-2 px-3 text-xs flex items-center justify-center gap-1.5 font-normal opacity-60 cursor-not-allowed"
+                title="Coming soon — Enterprise SSO is not yet implemented"
               >
                 <span>🏢</span>
-                <span>Enterprise SSO</span>
+                <span>SSO (Coming Soon)</span>
               </button>
             </div>
+
+            <p className="mt-2 text-[11px] text-neutral-700">
+              Email and password is currently the only supported authentication method.
+            </p>
           </div>
 
           {/* Create Account / New User Option */}
@@ -257,7 +222,7 @@ export function Login({ onSwitchToRegister }: LoginProps) {
 
           {/* Security Architecture Verification */}
           <div className="mt-4 text-center text-[11px] text-black">
-            Protected with zero-knowledge client-side encryption • PBKDF2-SHA-256 & AES-256-GCM
+            Protected with client-side password encryption • PBKDF2-SHA-256 & AES-256-GCM
           </div>
         </div>
       </div>

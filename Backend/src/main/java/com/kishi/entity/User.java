@@ -1,5 +1,6 @@
 package com.kishi.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -16,6 +17,9 @@ public class User {
     private long id;
     private String email;
     private String passwordhash;
+
+    @Column(name = "vault_verifier", columnDefinition = "TEXT")
+    private String vaultVerifier;
 
     //getters and setters
     public long getId() {
@@ -40,6 +44,14 @@ public class User {
 
     public void setPasswordhash(String passwordhash) {
         this.passwordhash = passwordhash;
+    }
+
+    public String getVaultVerifier() {
+        return vaultVerifier;
+    }
+
+    public void setVaultVerifier(String vaultVerifier) {
+        this.vaultVerifier = vaultVerifier;
     }
 
     

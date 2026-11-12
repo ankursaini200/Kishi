@@ -56,5 +56,17 @@ public class GlobalExceptionHandler {
                     .body(response);
         }
 
+        @ExceptionHandler(VaultVerifierAlreadyExistsException.class)
+        public ResponseEntity<ErrorResponse> handleVaultVerifierAlreadyExists(
+                VaultVerifierAlreadyExistsException exception) {
+
+            ErrorResponse response =
+                    new ErrorResponse(exception.getMessage());
+
+            return ResponseEntity
+                    .status(HttpStatus.CONFLICT)
+                    .body(response);
+        }
+
         
 }

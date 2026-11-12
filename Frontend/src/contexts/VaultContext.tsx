@@ -21,17 +21,33 @@ import {
   createVaultEntry,
   updateVaultEntry,
   deleteVaultEntry,
+  getVaultVerifier,
+  createVaultVerifier,
 } from '../services/vaultService';
 
 import {
   encryptVaultData,
   decryptVaultData,
+  createMasterPasswordVerifier,
+  verifyMasterPasswordWithVerifier,
 } from '../crypto/vaultCrypto';
+
+export type VaultVerifierMode =
+  | 'loading'
+  | 'unlock'
+  | 'setup'
+  | 'legacy_unlock'
+  | 'error';
 
 interface VaultContextValue {
   entries: VaultEntry[];
   isLoading: boolean;
   error: string | null;
+
+  verifierMode: VaultVerifierMode;
+  verifierError: string | null;
+  refreshVerifierStatus: () => Promise<void>;
+  setupMasterPassword: (password: string) => Promise<void>;
 
   refreshEntries: () => Promise<void>;
 
@@ -78,6 +94,15 @@ export function VaultProvider({
     useState<boolean>(false);
 
   const [error, setError] =
+    useState<string | null>(null);
+
+  const [encryptedVerifier, setEncryptedVerifier] =
+    useState<string | null>(null);
+
+  const [verifierMode, setVerifierMode] =
+    useState<VaultVerifierMode>('loading');
+
+  const [verifierError, setVerifierError] =
     useState<string | null>(null);
 
   /*
@@ -184,6 +209,99 @@ export function VaultProvider({
 
   /*
    * ---------------------------------------------------------
+   * REFRESH VERIFIER STATUS
+   * ---------------------------------------------------------
+   *
+   * Determines whether the user already has a client-encrypted
+   * master-password verifier, has legacy encrypted entries
+   * without a verifier, or needs first-time setup.
+   */
+  const refreshVerifierStatus = useCallback(async () => {
+    if (!isAuthenticated || !token) {
+      return;
+    }
+
+    await Promise.resolve();
+
+    setVerifierMode('loading');
+    setVerifierError(null);
+
+    try {
+      const verifierResponse = await getVaultVerifier(token);
+
+      if (
+        verifierResponse.hasVerifier &&
+        verifierResponse.encryptedVerifier
+      ) {
+        setEncryptedVerifier(verifierResponse.encryptedVerifier);
+        setVerifierMode('unlock');
+        return;
+      }
+
+      setEncryptedVerifier(null);
+
+      const backendEntries = await getVaultEntries(token);
+      setVerifierMode(
+        backendEntries.length > 0 ? 'legacy_unlock' : 'setup'
+      );
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'Failed to check vault verification status';
+      setVerifierError(message);
+      setVerifierMode('error');
+    }
+  }, [isAuthenticated, token]);
+
+  useEffect(() => {
+    if (isAuthenticated && token && !isUnlocked) {
+      const timeout = window.setTimeout(() => {
+        void refreshVerifierStatus();
+      }, 0);
+
+      return () => {
+        window.clearTimeout(timeout);
+      };
+    }
+  }, [isAuthenticated, token, isUnlocked, refreshVerifierStatus]);
+
+  /*
+   * ---------------------------------------------------------
+   * INITIALIZE MASTER PASSWORD VERIFIER (EMPTY VAULT SETUP)
+   * ---------------------------------------------------------
+   */
+  const setupMasterPassword = async (
+    password: string
+  ): Promise<void> => {
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
+
+    if (!password) {
+      throw new Error('Master password is required');
+    }
+
+    const newVerifier =
+      await createMasterPasswordVerifier(password);
+
+    try {
+      const saved = await createVaultVerifier(
+        newVerifier,
+        token
+      );
+      setEncryptedVerifier(
+        saved.encryptedVerifier ?? newVerifier
+      );
+      setVerifierMode('unlock');
+    } catch (err) {
+      await refreshVerifierStatus();
+      throw err;
+    }
+  };
+
+  /*
+   * ---------------------------------------------------------
    * VERIFY MASTER PASSWORD
    * ---------------------------------------------------------
    *
@@ -191,19 +309,12 @@ export function VaultProvider({
    *
    * We do NOT send the master password to the backend.
    *
-   * Instead:
-   *
-   *     master password
-   *            ↓
-   *          PBKDF2
-   *            ↓
-   *        AES-256 key
-   *            ↓
-   *      AES-GCM decrypt
-   *            ↓
-   *       success/failure
-   *
-   * If the password is wrong, AES-GCM authentication fails.
+   * Case A: Existing encrypted verifier -> decrypt verifier.
+   * Case C: Legacy entries without verifier -> decrypt first
+   *         entry, and if valid, initialize the verifier
+   *         without modifying existing vault entries.
+   * Case B/D: Empty vault without verifier -> returns false
+   *           (must use setupMasterPassword first).
    */
   const verifyMasterPassword = async (
     password: string
@@ -214,39 +325,76 @@ export function VaultProvider({
       );
     }
 
+    if (!password) {
+      return false;
+    }
+
     try {
-      // Get encrypted vault entries
+      if (encryptedVerifier) {
+        return await verifyMasterPasswordWithVerifier(
+          encryptedVerifier,
+          password
+        );
+      }
+
+      const verifierResponse =
+        await getVaultVerifier(token);
+
+      if (
+        verifierResponse.hasVerifier &&
+        verifierResponse.encryptedVerifier
+      ) {
+        setEncryptedVerifier(
+          verifierResponse.encryptedVerifier
+        );
+        setVerifierMode('unlock');
+        return await verifyMasterPasswordWithVerifier(
+          verifierResponse.encryptedVerifier,
+          password
+        );
+      }
+
       const backendEntries =
         await getVaultEntries(token);
 
-      /*
-       * TEMPORARY EMPTY-VAULT BEHAVIOR
-       *
-       * If there are no vault entries,
-       * there is currently nothing we can
-       * decrypt to verify the password.
-       *
-       * We will replace this later with a
-       * dedicated encrypted vault verifier.
-       */
       if (backendEntries.length === 0) {
-        return true;
+        setVerifierMode('setup');
+        return false;
       }
 
-      /*
-       * Try decrypting the first real
-       * encrypted vault password.
-       *
-       * Correct password:
-       *     decrypt succeeds
-       *
-       * Wrong password:
-       *     decryptVaultData throws
-       */
+      // Case C: Legacy account with existing entries and no verifier
       await decryptVaultData(
         backendEntries[0].encryptedPassword,
         password
       );
+
+      const newVerifier =
+        await createMasterPasswordVerifier(password);
+
+      try {
+        const saved = await createVaultVerifier(
+          newVerifier,
+          token
+        );
+        setEncryptedVerifier(
+          saved.encryptedVerifier ?? newVerifier
+        );
+        setVerifierMode('unlock');
+      } catch {
+        // Handle concurrent initialization race gracefully
+        const refreshed = await getVaultVerifier(token);
+        if (
+          refreshed.hasVerifier &&
+          refreshed.encryptedVerifier
+        ) {
+          setEncryptedVerifier(refreshed.encryptedVerifier);
+          setVerifierMode('unlock');
+          return await verifyMasterPasswordWithVerifier(
+            refreshed.encryptedVerifier,
+            password
+          );
+        }
+      }
 
       return true;
     } catch {
@@ -488,6 +636,10 @@ export function VaultProvider({
         entries: visibleEntries,
         isLoading,
         error,
+        verifierMode,
+        verifierError,
+        refreshVerifierStatus,
+        setupMasterPassword,
         refreshEntries,
         verifyMasterPassword,
         addEntry,

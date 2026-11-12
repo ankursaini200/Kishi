@@ -34,3 +34,18 @@ export interface VaultResponse {
   encryptedPassword: string;
   website?: string;
 }
+
+/**
+ * DTO sent to backend API: POST /api/vault/verifier
+ */
+export interface VaultVerifierRequest {
+  encryptedVerifier: string;
+}
+
+/**
+ * DTO received from backend API: GET /api/vault/verifier and POST /api/vault/verifier
+ */
+export interface VaultVerifierResponse {
+  hasVerifier: boolean;
+  encryptedVerifier: string | null;
+}

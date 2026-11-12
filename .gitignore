@@ -1,0 +1,87 @@
+# ==============================================================================
+# Secrets & Environment Variables
+# ==============================================================================
+.env
+.env.*
+!.env.example
+!.env.example.*
+*.local
+application-local.properties
+application-local.yml
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+
+# ==============================================================================
+# Java / Maven (Backend)
+# ==============================================================================
+target/
+*.class
+*.jar
+!**/wrapper/maven-wrapper.jar
+*.war
+*.ear
+surefire-reports/
+failsafe-reports/
+
+# ==============================================================================
+# Node / React / Vite (Frontend)
+# ==============================================================================
+node_modules/
+dist/
+dist-ssr/
+build/
+.vite/
+coverage/
+.eslintcache
+*.tsbuildinfo
+
+# ==============================================================================
+# Database Dumps & Local DB Files
+# ==============================================================================
+*.dump
+*.bak
+*.db
+*.sqlite
+*.sqlite3
+dump.sql
+backup*.sql
+
+# ==============================================================================
+# Logs & Temporary Files
+# ==============================================================================
+logs/
+*.log
+spring.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# ==============================================================================
+# IDE & Operating System Files
+# ==============================================================================
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.classpath
+.project
+.settings/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+.DS_Store
+Thumbs.db
+Desktop.ini
+
