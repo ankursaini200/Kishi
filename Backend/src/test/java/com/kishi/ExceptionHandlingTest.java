@@ -10,6 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -154,6 +155,42 @@ class ExceptionHandlingTest {
                         .content(invalidVaultBody)
         )
         .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void invalidLoginCredentialsShouldReturn401() throws Exception {
+
+        String email =
+                "bad-creds-" + UUID.randomUUID() + "@example.com";
+
+        String registerBody = """
+                {
+                    "email": "%s",
+                    "password": "password123"
+                }
+                """.formatted(email);
+
+        mockMvc.perform(
+                post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(registerBody)
+        )
+        .andExpect(status().isOk());
+
+        String badLoginBody = """
+                {
+                    "email": "%s",
+                    "password": "wrong-password"
+                }
+                """.formatted(email);
+
+        mockMvc.perform(
+                post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(badLoginBody)
+        )
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.message").value("Invalid email or password"));
     }
 
     private String extractToken(String response) {

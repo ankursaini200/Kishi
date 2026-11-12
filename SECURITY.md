@@ -10,10 +10,12 @@ Kishi is currently in active early-stage development and is **not yet production
 
 **Please do not report security vulnerabilities through public GitHub issues, discussions, or pull requests.**
 
-If you discover a potential security vulnerability in Kishi, please report it privately using one of the following channels:
+If you discover a potential security vulnerability in Kishi, please report it privately using **GitHub Private Vulnerability Reporting** (enabled on this repository):
 
-1. **GitHub Private Vulnerability Reporting (Recommended):** Use the **Security** tab -> **Advisories** -> **Report a vulnerability** on the GitHub repository (`https://github.com/AnkurSaini200/Kishi/security/advisories`).
-2. **Private Maintainer Contact:** `[INSERT_SECURITY_CONTACT_EMAIL]` *(maintainer: please replace this placeholder with a monitored security contact email before publishing)*.
+- Open the **Security** tab -> **Advisories** -> **Report a vulnerability** on GitHub:
+  `https://github.com/ankursaini200/Kishi/security/advisories/new`
+
+*(No separate email address is maintained; please use GitHub Private Vulnerability Reporting so reports stay confidential and tracked.)*
 
 ---
 

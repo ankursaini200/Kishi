@@ -58,7 +58,7 @@ A full-stack password manager built with **Spring Boot 3** and **React 19 + Type
 ┌────────────────────────────────────────────────────────────────────┐
 │                             PostgreSQL                             │
 │                                                                    │
-│  • users (id, email, passwordhash)                                 │
+│  • users (id, email, passwordhash, vault_verifier)                 │
 │  • vault_entry (id, title, username, website, encrypted_password)  │
 └────────────────────────────────────────────────────────────────────┘
 ```
@@ -240,8 +240,7 @@ npm run build
 - **Master Password Verifier for Empty Legacy Vaults:** Users with a brand-new or empty legacy vault (no verifier and zero entries) must establish a vault master password on first unlock (`POST /api/vault/verifier`) because there are no existing encrypted entries to verify against. Existing accounts with saved entries migrate automatically on first successful unlock without modifying existing entries.
 - **Plaintext Vault Metadata:** Only the vault entry `password` field is encrypted client-side. Entry `title`, `username`, and `website` (as well as user account `email`) are stored in plaintext in PostgreSQL to support server-side title search (`/api/vault/search`).
 - **Frontend-Only Fields:** Vault `category` (`"login"`) and `updatedAt` timestamps in the UI are currently frontend defaults and are not persisted in PostgreSQL.
-- **CORS Hardcoded for Local Dev:** `SecurityConfig.java` allows CORS requests only from `http://localhost:5173`.
-- **Development JPA Settings:** `application.properties` uses `spring.jpa.hibernate.ddl-auto=update` and `spring.jpa.show-sql=true` rather than versioned database migrations (e.g., Flyway or Liquibase).
+- **Production Profile & Migrations:** `application.properties` uses `spring.jpa.hibernate.ddl-auto=update` and `spring.jpa.show-sql=true` for local development; `application-prod.properties` (`SPRING_PROFILES_ACTIVE=prod`) disables SQL logging and stack traces while defaulting `JPA_DDL_AUTO` to `update` until versioned database migrations (e.g., Flyway) and `validate` are configured.
 - **No Brute-Force Rate Limiting or Token Revocation:** Authentication endpoints do not currently implement rate limiting, and JWTs have no refresh-token rotation or server-side revocation list.
 
 ---
