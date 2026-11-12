@@ -18,5 +18,6 @@ RUN chown kishi:kishi /app/app.jar
 
 USER kishi
 EXPOSE 8080
+ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=65.0 -XX:+UseSerialGC"
 
-ENTRYPOINT ["java", "-XX:MaxRAMPercentage=65.0", "-XX:+UseSerialGC", "-jar", "/app/app.jar"]
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]
